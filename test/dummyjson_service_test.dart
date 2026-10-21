@@ -27,6 +27,21 @@ void main() {
     expect(products.single.name, 'Calvin Klein CK One');
   });
 
+  test('searchProducts chama a URL da busca', () async {
+    Uri? requestedUrl;
+    await withFakeApi(() => DummyJsonService().searchProducts('phone'), (
+      request,
+    ) async {
+      requestedUrl = request.url;
+      return http.Response('{"products":[]}', 200);
+    });
+
+    expect(
+      requestedUrl.toString(),
+      'https://dummyjson.com/products/search?q=phone',
+    );
+  });
+
   test('status diferente de 200 vira Exception', () async {
     expect(
       withFakeApi(

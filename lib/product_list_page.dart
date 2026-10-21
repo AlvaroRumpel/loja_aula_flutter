@@ -71,7 +71,19 @@ class ProductListPage extends StatefulWidget {
 class _ProductListPageState extends State<ProductListPage> {
   // Future = um valor que ainda vai chegar (a resposta da internet).
   // late: só é calculado no primeiro uso, quando já existe acesso a widget.
-  late final Future<List<Product>> _future = widget.service.fetchProducts();
+  late Future<List<Product>> _future = widget.service.fetchProducts();
+
+  // setState avisa o Flutter: "algo mudou, desenhe a tela de novo".
+  // trim tira os espaços das pontas: "  phone " vira "phone".
+  // Campo vazio volta a mostrar todos os produtos.
+  void _search(String text) {
+    final query = text.trim();
+    setState(() {
+      _future = query.isEmpty
+          ? widget.service.fetchProducts()
+          : widget.service.searchProducts(query);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,41 +92,65 @@ class _ProductListPageState extends State<ProductListPage> {
         title: const Text('Minha Loja'),
         actions: const [CartButton()],
       ),
-      // FutureBuilder redesenha conforme o estado do Future:
-      // carregando, erro ou com dados.
-      body: FutureBuilder<List<Product>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Erro ao carregar os produtos'));
-          }
-          final products = snapshot.data!;
-          // GridView.builder monta só os cards que aparecem na tela.
-          return GridView.builder(
+      body: Column(
+        children: [
+          Padding(
             padding: const EdgeInsets.all(8),
-            // Cada card tem no máximo 220 de largura: quanto mais larga
-            // a janela, mais colunas cabem.
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 220,
-              childAspectRatio: 0.7,
-            ),
-            itemCount: products.length,
-            itemBuilder: (context, i) => GestureDetector(
-              // Navigator.push empilha uma nova tela sobre a atual.
-              // Passamos o produto tocado para a tela de detalhe.
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProductDetailPage(product: products[i]),
-                ),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: 'Buscar produtos',
+                prefixIcon: Icon(Icons.search),
               ),
-              child: ProductCard(product: products[i]),
+              // Busca ao apertar Enter (ou a lupa do teclado do celular).
+              textInputAction: TextInputAction.search,
+              onSubmitted: _search,
             ),
-          );
-        },
+          ),
+          // Expanded: a grade ocupa o resto da tela.
+          Expanded(
+            // FutureBuilder redesenha conforme o estado do Future:
+            // carregando, erro ou com dados.
+            child: FutureBuilder<List<Product>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Erro ao carregar os produtos'),
+                  );
+                }
+                final products = snapshot.data!;
+                if (products.isEmpty) {
+                  return const Center(child: Text('Nenhum produto encontrado'));
+                }
+                // GridView.builder monta só os cards que aparecem na tela.
+                return GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  // Cada card tem no máximo 220 de largura: quanto mais larga
+                  // a janela, mais colunas cabem.
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 220,
+                    childAspectRatio: 0.7,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, i) => GestureDetector(
+                    // Navigator.push empilha uma nova tela sobre a atual.
+                    // Passamos o produto tocado para a tela de detalhe.
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailPage(product: products[i]),
+                      ),
+                    ),
+                    child: ProductCard(product: products[i]),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
