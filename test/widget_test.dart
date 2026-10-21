@@ -15,6 +15,7 @@ class FakeDummyJsonService extends DummyJsonService {
 
   final Future<List<Product>> Function() onFetchProducts;
   String? requestedCategory; // última categoria pedida
+  String? searchedQuery; // último texto buscado
 
   @override
   Future<List<Product>> fetchProducts() => onFetchProducts();
@@ -23,6 +24,13 @@ class FakeDummyJsonService extends DummyJsonService {
   Future<List<Product>> fetchCategory(String category) async {
     requestedCategory = category;
     return [productNamed(1, 'Mascara')];
+  }
+
+  // "phone" acha um produto; qualquer outro texto não acha nada.
+  @override
+  Future<List<Product>> searchProducts(String query) async {
+    searchedQuery = query;
+    return query == 'phone' ? [productNamed(3, 'iPhone X')] : [];
   }
 }
 
@@ -187,5 +195,53 @@ void main() {
     await tester.tap(find.byIcon(Icons.remove));
     await tester.pump();
     expect(find.text('Seu carrinho está vazio'), findsOneWidget);
+  });
+
+  testWidgets('busca mostra o resultado ou o aviso', (tester) async {
+    final service = FakeDummyJsonService(() async => [productNamed(2, 'Kiwi')]);
+    await tester.pumpWidget(
+      MaterialApp(home: ProductListPage(service: service)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), ' phone ');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(service.searchedQuery, 'phone');
+    expect(find.text('iPhone X'), findsOneWidget);
+    expect(find.text('Kiwi'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'xyz');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(find.text('Nenhum produto encontrado'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), '');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    expect(find.text('Kiwi'), findsOneWidget);
+  });
+
+  testWidgets('busca e categoria não se misturam', (tester) async {
+    final service = FakeDummyJsonService(() async => [productNamed(2, 'Kiwi')]);
+    await tester.pumpWidget(
+      MaterialApp(home: ProductListPage(service: service)),
+    );
+    await tester.pumpAndSettle();
+
+    // Chip escolhido e depois uma busca: o chip volta para "Todas".
+    await tester.tap(find.text('beauty'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'phone');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    final todas = find.widgetWithText(ChoiceChip, 'Todas');
+    expect(tester.widget<ChoiceChip>(todas).selected, isTrue);
+
+    // Escolher um chip limpa o texto da busca.
+    await tester.tap(find.text('beauty'));
+    await tester.pumpAndSettle();
+    expect(find.text('phone'), findsNothing);
+    expect(find.text('Mascara'), findsOneWidget);
   });
 }

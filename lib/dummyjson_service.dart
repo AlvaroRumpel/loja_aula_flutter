@@ -12,6 +12,11 @@ class DummyJsonService {
   Future<List<Product>> fetchCategory(String category) =>
       _get('/products/category/$category');
 
+  // Busca pelo texto, ex.: /products/search?q=phone
+  // encodeQueryComponent deixa espaço e acento num formato que a URL aceita.
+  Future<List<Product>> searchProducts(String query) =>
+      _get('/products/search?q=${Uri.encodeQueryComponent(query)}');
+
   // GET usado por todos os métodos: checa o status num lugar só.
   // async/await: "await" espera a resposta chegar sem travar a tela.
   Future<List<Product>> _get(String path) async {

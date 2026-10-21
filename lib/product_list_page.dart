@@ -86,15 +86,40 @@ class _ProductListPageState extends State<ProductListPage> {
 
   String? _category; // categoria escolhida; null = todas
 
+  // O controller deixa o código limpar o texto do campo de busca.
+  final _searchController = TextEditingController();
+
   // setState avisa o Flutter: "algo mudou, desenhe a tela de novo".
   // Sem categoria busca tudo; com categoria, só os produtos dela.
+  // Busca e categoria não se misturam: escolher um chip limpa a busca.
   void _selectCategory(String? category) {
+    _searchController.clear();
     setState(() {
       _category = category;
       _future = category == null
           ? widget.service.fetchProducts()
           : widget.service.fetchCategory(category);
     });
+  }
+
+  // trim tira os espaços das pontas: "  phone " vira "phone".
+  // Campo vazio volta a mostrar todos os produtos.
+  // A busca da API olha a loja toda, então o chip volta para "Todas".
+  void _search(String text) {
+    final query = text.trim();
+    setState(() {
+      _category = null;
+      _future = query.isEmpty
+          ? widget.service.fetchProducts()
+          : widget.service.searchProducts(query);
+    });
+  }
+
+  // A tela criou o controller, então ela o descarta quando sai.
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -106,6 +131,19 @@ class _ProductListPageState extends State<ProductListPage> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Buscar produtos',
+                prefixIcon: Icon(Icons.search),
+              ),
+              // Busca ao apertar Enter (ou a lupa do teclado do celular).
+              textInputAction: TextInputAction.search,
+              onSubmitted: _search,
+            ),
+          ),
           // Uma linha de chips que rola para o lado quando não cabe.
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -144,6 +182,9 @@ class _ProductListPageState extends State<ProductListPage> {
                   );
                 }
                 final products = snapshot.data!;
+                if (products.isEmpty) {
+                  return const Center(child: Text('Nenhum produto encontrado'));
+                }
                 // GridView.builder monta só os cards que aparecem na tela.
                 return GridView.builder(
                   padding: const EdgeInsets.all(8),
