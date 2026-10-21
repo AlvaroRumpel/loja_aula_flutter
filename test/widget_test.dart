@@ -169,4 +169,23 @@ void main() {
     expect(find.text('Mascara'), findsOneWidget);
     expect(find.text('Kiwi'), findsNothing);
   });
+
+  testWidgets('mesmo produto vira uma linha com quantidade', (tester) async {
+    addToCart(productNamed(1, 'Kiwi'));
+    addToCart(productNamed(1, 'Kiwi'));
+    await tester.pumpWidget(const MaterialApp(home: CartPage()));
+    expect(find.text('Kiwi'), findsOneWidget);
+    expect(find.text('2× R\$ 9,99'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+    expect(find.text('3× R\$ 9,99'), findsOneWidget);
+    expect(find.text('Total: R\$ 29,97'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(find.byIcon(Icons.remove));
+    await tester.tap(find.byIcon(Icons.remove));
+    await tester.pump();
+    expect(find.text('Seu carrinho está vazio'), findsOneWidget);
+  });
 }
