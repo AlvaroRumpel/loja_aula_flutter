@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product.dart';
+import 'package:loja/product_detail_page.dart';
 import 'package:loja/product_list_page.dart';
 
 // Serviço falso: devolve o que o teste mandar, sem internet.
@@ -88,5 +89,24 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Erro ao carregar os produtos'), findsOneWidget);
+  });
+
+  testWidgets('detalhe mostra dados', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: ProductDetailPage(product: productNamed(1, 'Kiwi'))),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Kiwi'), findsOneWidget); // na AppBar
+    expect(find.text('R\$ 9,99'), findsOneWidget);
+    expect(find.text('Descrição de Kiwi'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tocar no card abre detalhe', (tester) async {
+    await tester.pumpWidget(app(() async => [productNamed(1, 'Kiwi')]));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kiwi'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ProductDetailPage), findsOneWidget);
   });
 }

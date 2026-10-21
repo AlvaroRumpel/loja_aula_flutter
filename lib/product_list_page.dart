@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product.dart';
+import 'package:loja/product_detail_page.dart';
 
 // Card de um produto: foto, nome, preço e nota.
 class ProductCard extends StatelessWidget {
@@ -97,7 +98,17 @@ class _ProductListPageState extends State<ProductListPage> {
               childAspectRatio: 0.7,
             ),
             itemCount: products.length,
-            itemBuilder: (context, i) => ProductCard(product: products[i]),
+            itemBuilder: (context, i) => GestureDetector(
+              // Navigator.push empilha uma nova tela sobre a atual.
+              // Passamos o produto tocado para a tela de detalhe.
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProductDetailPage(product: products[i]),
+                ),
+              ),
+              child: ProductCard(product: products[i]),
+            ),
           );
         },
       ),
