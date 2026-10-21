@@ -27,6 +27,21 @@ void main() {
     expect(products.single.name, 'Calvin Klein CK One');
   });
 
+  test('fetchCategory chama a URL da categoria', () async {
+    Uri? requestedUrl;
+    await withFakeApi(() => DummyJsonService().fetchCategory('beauty'), (
+      request,
+    ) async {
+      requestedUrl = request.url;
+      return http.Response('{"products":[]}', 200);
+    });
+
+    expect(
+      requestedUrl.toString(),
+      'https://dummyjson.com/products/category/beauty',
+    );
+  });
+
   test('status diferente de 200 vira Exception', () async {
     expect(
       withFakeApi(

@@ -57,6 +57,17 @@ class ProductCard extends StatelessWidget {
   }
 }
 
+// Categorias dos chips. A lista completa da API está em
+// https://dummyjson.com/products/category-list
+const categories = [
+  'beauty',
+  'fragrances',
+  'furniture',
+  'groceries',
+  'smartphones',
+  'laptops',
+];
+
 // Tela da vitrine: busca os produtos na internet e mostra numa grade.
 class ProductListPage extends StatefulWidget {
   // O serviço vem de fora: nos testes dá para trocar por um falso.
@@ -71,7 +82,20 @@ class ProductListPage extends StatefulWidget {
 class _ProductListPageState extends State<ProductListPage> {
   // Future = um valor que ainda vai chegar (a resposta da internet).
   // late: só é calculado no primeiro uso, quando já existe acesso a widget.
-  late final Future<List<Product>> _future = widget.service.fetchProducts();
+  late Future<List<Product>> _future = widget.service.fetchProducts();
+
+  String? _category; // categoria escolhida; null = todas
+
+  // setState avisa o Flutter: "algo mudou, desenhe a tela de novo".
+  // Sem categoria busca tudo; com categoria, só os produtos dela.
+  void _selectCategory(String? category) {
+    setState(() {
+      _category = category;
+      _future = category == null
+          ? widget.service.fetchProducts()
+          : widget.service.fetchCategory(category);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,41 +104,72 @@ class _ProductListPageState extends State<ProductListPage> {
         title: const Text('Minha Loja'),
         actions: const [CartButton()],
       ),
-      // FutureBuilder redesenha conforme o estado do Future:
-      // carregando, erro ou com dados.
-      body: FutureBuilder<List<Product>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Erro ao carregar os produtos'));
-          }
-          final products = snapshot.data!;
-          // GridView.builder monta só os cards que aparecem na tela.
-          return GridView.builder(
+      body: Column(
+        children: [
+          // Uma linha de chips que rola para o lado quando não cabe.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.all(8),
-            // Cada card tem no máximo 220 de largura: quanto mais larga
-            // a janela, mais colunas cabem.
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 220,
-              childAspectRatio: 0.7,
-            ),
-            itemCount: products.length,
-            itemBuilder: (context, i) => GestureDetector(
-              // Navigator.push empilha uma nova tela sobre a atual.
-              // Passamos o produto tocado para a tela de detalhe.
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProductDetailPage(product: products[i]),
+            child: Row(
+              spacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Todas'),
+                  selected: _category == null,
+                  onSelected: (_) => _selectCategory(null),
                 ),
-              ),
-              child: ProductCard(product: products[i]),
+                // "for" dentro da lista: um chip para cada categoria.
+                for (final category in categories)
+                  ChoiceChip(
+                    label: Text(category),
+                    selected: _category == category,
+                    onSelected: (_) => _selectCategory(category),
+                  ),
+              ],
             ),
-          );
-        },
+          ),
+          // Expanded: a grade ocupa o resto da tela.
+          Expanded(
+            // FutureBuilder redesenha conforme o estado do Future:
+            // carregando, erro ou com dados.
+            child: FutureBuilder<List<Product>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Erro ao carregar os produtos'),
+                  );
+                }
+                final products = snapshot.data!;
+                // GridView.builder monta só os cards que aparecem na tela.
+                return GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  // Cada card tem no máximo 220 de largura: quanto mais larga
+                  // a janela, mais colunas cabem.
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 220,
+                    childAspectRatio: 0.7,
+                  ),
+                  itemCount: products.length,
+                  itemBuilder: (context, i) => GestureDetector(
+                    // Navigator.push empilha uma nova tela sobre a atual.
+                    // Passamos o produto tocado para a tela de detalhe.
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProductDetailPage(product: products[i]),
+                      ),
+                    ),
+                    child: ProductCard(product: products[i]),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -14,9 +14,16 @@ class FakeDummyJsonService extends DummyJsonService {
   FakeDummyJsonService(this.onFetchProducts);
 
   final Future<List<Product>> Function() onFetchProducts;
+  String? requestedCategory; // última categoria pedida
 
   @override
   Future<List<Product>> fetchProducts() => onFetchProducts();
+
+  @override
+  Future<List<Product>> fetchCategory(String category) async {
+    requestedCategory = category;
+    return [productNamed(1, 'Mascara')];
+  }
 }
 
 Product productNamed(int id, String name) => Product(
@@ -146,5 +153,20 @@ void main() {
     await tester.tap(find.byType(CartButton));
     await tester.pumpAndSettle();
     expect(find.byType(CartPage), findsOneWidget);
+  });
+
+  testWidgets('chip de categoria mostra só a categoria', (tester) async {
+    final service = FakeDummyJsonService(() async => [productNamed(2, 'Kiwi')]);
+    await tester.pumpWidget(
+      MaterialApp(home: ProductListPage(service: service)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Kiwi'), findsOneWidget);
+
+    await tester.tap(find.text('beauty'));
+    await tester.pumpAndSettle();
+    expect(service.requestedCategory, 'beauty');
+    expect(find.text('Mascara'), findsOneWidget);
+    expect(find.text('Kiwi'), findsNothing);
   });
 }
