@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product_list_page.dart';
 
 void main() => runApp(const StoreApp());
@@ -23,8 +24,8 @@ class StoreApp extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
       ),
-      // A primeira tela do app.
-      home: const ProductListPage(),
+      // A primeira tela do app. Ela recebe o serviço que busca os produtos.
+      home: ProductListPage(service: DummyJsonService()),
     );
   }
 }

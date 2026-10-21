@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product.dart';
 
 // Card de um produto: foto, nome, preço e nota.
@@ -54,32 +55,51 @@ class ProductCard extends StatelessWidget {
   }
 }
 
-// Produto fixo para testar o card antes de buscar na internet.
-const sampleProduct = Product(
-  id: 6,
-  name: 'Calvin Klein CK One',
-  description: 'CK One by Calvin Klein is a classic unisex fragrance.',
-  price: 49.99,
-  rating: 4.37,
-  thumbnail:
-      'https://cdn.dummyjson.com/product-images/fragrances/calvin-klein-ck-one/thumbnail.webp',
-);
+// Tela da vitrine: busca os produtos na internet e mostra numa grade.
+class ProductListPage extends StatefulWidget {
+  // O serviço vem de fora: nos testes dá para trocar por um falso.
+  const ProductListPage({super.key, required this.service});
 
-// Tela da vitrine. Por enquanto mostra um produto fixo.
-class ProductListPage extends StatelessWidget {
-  const ProductListPage({super.key});
+  final DummyJsonService service;
+
+  @override
+  State<ProductListPage> createState() => _ProductListPageState();
+}
+
+class _ProductListPageState extends State<ProductListPage> {
+  // Future = um valor que ainda vai chegar (a resposta da internet).
+  // late: só é calculado no primeiro uso, quando já existe acesso a widget.
+  late final Future<List<Product>> _future = widget.service.fetchProducts();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Minha Loja')),
-      body: const Center(
-        // SizedBox: o card ganha o tamanho de um item da vitrine.
-        child: SizedBox(
-          width: 200,
-          height: 300,
-          child: ProductCard(product: sampleProduct),
-        ),
+      // FutureBuilder redesenha conforme o estado do Future:
+      // carregando, erro ou com dados.
+      body: FutureBuilder<List<Product>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(child: Text('Erro ao carregar os produtos'));
+          }
+          final products = snapshot.data!;
+          // GridView.builder monta só os cards que aparecem na tela.
+          return GridView.builder(
+            padding: const EdgeInsets.all(8),
+            // Cada card tem no máximo 220 de largura: quanto mais larga
+            // a janela, mais colunas cabem.
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 220,
+              childAspectRatio: 0.7,
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, i) => ProductCard(product: products[i]),
+          );
+        },
       ),
     );
   }
