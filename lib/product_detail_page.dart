@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:loja/cart.dart';
 import 'package:loja/product.dart';
 
 // Tela de detalhe: mostra o produto que veio da vitrine.
@@ -13,7 +14,7 @@ class ProductDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       // O Navigator põe a seta de voltar na AppBar sozinho.
-      appBar: AppBar(title: Text(product.name)),
+      appBar: AppBar(title: Text(product.name), actions: const [CartButton()]),
       // ListView: a tela rola quando o conteúdo não cabe.
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -33,6 +34,10 @@ class ProductDetailPage extends StatelessWidget {
             ),
           ),
           Text(product.description),
+          FilledButton(
+            onPressed: () => addToCart(product),
+            child: const Text('Adicionar ao carrinho'),
+          ),
         ],
       ),
     );

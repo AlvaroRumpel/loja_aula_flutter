@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:loja/cart.dart';
 import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product.dart';
 import 'package:loja/product_detail_page.dart';
@@ -75,7 +76,10 @@ class _ProductListPageState extends State<ProductListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Minha Loja')),
+      appBar: AppBar(
+        title: const Text('Minha Loja'),
+        actions: const [CartButton()],
+      ),
       // FutureBuilder redesenha conforme o estado do Future:
       // carregando, erro ou com dados.
       body: FutureBuilder<List<Product>>(

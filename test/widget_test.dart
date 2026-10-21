@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:loja/cart.dart';
 import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product.dart';
 import 'package:loja/product_detail_page.dart';
@@ -44,6 +45,9 @@ Widget cardWith(Product product) => MaterialApp(
 );
 
 void main() {
+  // O carrinho é global: cada teste começa com ele vazio.
+  setUp(() => cart.value = []);
+
   testWidgets('card mostra nome, preço e nota', (tester) async {
     await tester.pumpWidget(cardWith(productNamed(6, 'Calvin Klein CK One')));
     await tester.pumpAndSettle();
@@ -97,6 +101,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Kiwi'), findsOneWidget); // na AppBar
+    expect(find.text('Adicionar ao carrinho'), findsOneWidget);
     expect(find.text('R\$ 9,99'), findsOneWidget);
     expect(find.text('Descrição de Kiwi'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -108,5 +113,38 @@ void main() {
     await tester.tap(find.text('Kiwi'));
     await tester.pumpAndSettle();
     expect(find.byType(ProductDetailPage), findsOneWidget);
+  });
+
+  testWidgets('adicionar no detalhe sobe o contador', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: ProductDetailPage(product: productNamed(1, 'Kiwi'))),
+    );
+    expect(find.text('0'), findsOneWidget);
+    await tester.tap(find.text('Adicionar ao carrinho'));
+    await tester.pump();
+    expect(find.text('1'), findsOneWidget);
+  });
+
+  testWidgets('carrinho mostra itens e total', (tester) async {
+    addToCart(productNamed(1, 'Kiwi'));
+    addToCart(productNamed(2, 'Apple'));
+    await tester.pumpWidget(const MaterialApp(home: CartPage()));
+    expect(find.text('Kiwi'), findsOneWidget);
+    expect(find.text('Apple'), findsOneWidget);
+    expect(find.text('Total: R\$ 19,98'), findsOneWidget);
+  });
+
+  testWidgets('carrinho vazio', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: CartPage()));
+    expect(find.text('Seu carrinho está vazio'), findsOneWidget);
+    expect(find.text('Total: R\$ 0,00'), findsOneWidget);
+  });
+
+  testWidgets('ícone do carrinho abre a tela do carrinho', (tester) async {
+    await tester.pumpWidget(app(() async => [productNamed(1, 'Kiwi')]));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(CartButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(CartPage), findsOneWidget);
   });
 }
