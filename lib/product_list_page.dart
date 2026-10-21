@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:loja/brand.dart';
 import 'package:loja/cart.dart';
 import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product.dart';
@@ -40,7 +41,7 @@ class ProductCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFE8572A),
+                color: brandColor,
               ),
             ),
             // Row coloca os filhos lado a lado.
@@ -126,7 +127,11 @@ class _ProductListPageState extends State<ProductListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Minha Loja'),
+        // Ícone e nome da marca lado a lado.
+        title: const Row(
+          spacing: 8,
+          children: [Icon(brandIcon), Text(brandName)],
+        ),
         actions: const [CartButton()],
       ),
       body: Column(

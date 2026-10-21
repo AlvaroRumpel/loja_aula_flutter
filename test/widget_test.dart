@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:loja/brand.dart';
 import 'package:loja/cart.dart';
 import 'package:loja/dummyjson_service.dart';
+import 'package:loja/main.dart';
 import 'package:loja/product.dart';
 import 'package:loja/product_detail_page.dart';
 import 'package:loja/product_list_page.dart';
@@ -243,5 +245,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('phone'), findsNothing);
     expect(find.text('Mascara'), findsOneWidget);
+  });
+
+  testWidgets('AppBar usa nome, ícone e cor da marca', (tester) async {
+    // Sem internet no teste, a vitrine cai no erro; só a AppBar importa aqui.
+    await tester.pumpWidget(const StoreApp());
+    await tester.pumpAndSettle();
+    expect(find.text(brandName), findsOneWidget);
+    expect(find.byIcon(brandIcon), findsOneWidget);
+    expect(
+      tester
+          .widget<Material>(
+            find
+                .descendant(
+                  of: find.byType(AppBar),
+                  matching: find.byType(Material),
+                )
+                .first,
+          )
+          .color,
+      brandColor,
+    );
   });
 }

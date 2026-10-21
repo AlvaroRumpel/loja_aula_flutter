@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:loja/brand.dart';
 import 'package:loja/cart.dart';
 import 'package:loja/product.dart';
 
@@ -30,7 +31,7 @@ class ProductDetailPage extends StatelessWidget {
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFE8572A),
+              color: brandColor,
             ),
           ),
           Text(product.description),

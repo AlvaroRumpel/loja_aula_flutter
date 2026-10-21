@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:loja/brand.dart';
 import 'package:loja/dummyjson_service.dart';
 import 'package:loja/product_list_page.dart';
 
@@ -13,14 +14,14 @@ class StoreApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Minha Loja',
+      title: brandName,
       debugShowCheckedModeBanner: false,
       // Tema: define as cores e o estilo de todo o app de uma vez só.
+      // O fundo das telas sai da cor da marca, bem clarinho.
       theme: ThemeData(
-        colorSchemeSeed: const Color(0xFFE8572A),
-        scaffoldBackgroundColor: const Color(0xFFFFF8F5),
+        colorSchemeSeed: brandColor,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFFE8572A),
+          backgroundColor: brandColor,
           foregroundColor: Colors.white,
         ),
       ),
